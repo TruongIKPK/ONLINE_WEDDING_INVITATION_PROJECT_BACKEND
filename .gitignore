@@ -1,0 +1,23 @@
+# Node modules
+node_modules/
+
+# Môi trường
+.env
+
+# Log
+*.log
+npm-debug.log*
+
+# IDE / hệ điều hành
+.DS_Store
+Thumbs.db
+
+# Build (nếu có)
+dist/
+build/
+
+# VSCode settings (nếu không muốn chia sẻ)
+.vscode/
+
+# File hệ thống khác
+*.swp
