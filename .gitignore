@@ -21,3 +21,5 @@ build/
 
 # File hệ thống khác
 *.swp
+
+logs/
