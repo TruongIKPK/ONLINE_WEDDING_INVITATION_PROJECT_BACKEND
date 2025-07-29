@@ -10,9 +10,17 @@ const config = {
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     dialect: 'mysql',
-    logging: false,
+    logging: console.log,
     dialectOptions: {
-      charset: 'utf8mb4'
+      charset: 'utf8mb4',
+      dateStrings: true,
+      typeCast: true
+    },
+    pool:{
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
     }
   }
 };
@@ -28,4 +36,17 @@ export const sequelize = new Sequelize(
   dbConfig
 );
 
-export default config;
+// Test connection
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Database connected successfully with Sequelize');
+  } catch (error) {
+    console.error('❌ Unable to connect to the database:', error.message);
+    process.exit(1);
+  }
+};
+
+testConnection();
+
+export default sequelize;
