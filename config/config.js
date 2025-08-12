@@ -49,4 +49,5 @@ const testConnection = async () => {
 
 testConnection();
 
+export { config };
 export default sequelize;

@@ -1,10 +1,12 @@
 import express from 'express';
 import db from './models/index.js';
+import templateRoutes from './routes/template.routes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use('/api/templates', templateRoutes);
 
 app.get('/test-db', async (req, res) => {
   try {

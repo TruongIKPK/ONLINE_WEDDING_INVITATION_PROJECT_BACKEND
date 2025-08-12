@@ -1,24 +1,7 @@
-import UserRepository from './UserRepository.js';
-import FormRepository from './FormRepository.js';
-import InfoWedRepository from './InfoWedRepository.js';
-import TemplateRepository from './TemplateRepository.js';
-import UserMediaRepository from './UserMediaRepository.js';
-import ContentTemplateRepository from './ContentTemplateRepository.js';
-
-export {
-    UserRepository,
-    FormRepository,
-    InfoWedRepository,
-    TemplateRepository,
-    UserMediaRepository,
-    ContentTemplateRepository
-};
-
-export default {
-    UserRepository,
-    FormRepository,
-    InfoWedRepository,
-    TemplateRepository,
-    UserMediaRepository,
-    ContentTemplateRepository
-};
+export { default as BaseRepository } from './BaseRepository.js';
+export { default as TemplateRepository } from './TemplateRepository.js';
+export { default as UserRepository } from './UserRepository.js';
+export { default as InfoWedRepository } from './InfoWedRepository.js';
+export { default as FormRepository } from './FormRepository.js';
+export { default as ContentTemplateRepository } from './ContentTemplateRepository.js';
+export { default as UserMediaRepository } from './UserMediaRepository.js';

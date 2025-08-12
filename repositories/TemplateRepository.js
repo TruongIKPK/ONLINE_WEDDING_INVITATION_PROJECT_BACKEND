@@ -1,126 +1,104 @@
-import BaseRepository from "./BaseRepository.js";
-import { where, fn, col, Op } from 'sequelize';
-import db from '../models/index.js';
+import BaseRepository from './BaseRepository.js';
+import { Op } from 'sequelize';
 
-class TemplateRepository extends BaseRepository {
+export class TemplateRepository extends BaseRepository {
     constructor() {
-        super(db.Template);
+        super();
+        // Đảm bảo model được thiết lập khi khởi tạo
+        setTimeout(() => this.initializeModel(), 100);
     }
 
-    // Lấy templates theo index (ordered)
-    async getTemplatesByIndex() {
-        try {
-            return await this.getAll({
-                order: [['index', 'ASC']],
-                attributes: ['id_template', 'index', 'content', 'created_at']
-            });
-        } catch (error) {
-            throw new Error(`Error fetching templates by index: ${error.message}`);
+    initializeModel() {
+        if (this.db && this.db.Template) {
+            this.setModel(this.db.Template);
+            console.log('✅ TemplateRepository model initialized');
+        } else {
+            console.warn('⚠️ Template model not available yet');
         }
     }
 
-    // Lấy template với usage count
-    async getTemplatesWithUsage() {
-        try {
-            const templates = await this.model.findAll({
-                include: [
-                    {
-                        model: db.InfoWed,
-                        as: 'InfoWeds',
-                        attributes: []
-                    }
-                ],
-                attributes: [
-                    'id_template',
-                    'index',
-                    'content',
-                    'created_at',
-                    [fn('COUNT', col('InfoWeds.id_info_wed')), 'usage_count']
-                ],
-                group: ['Template.id_template'],
-                order: [['index', 'ASC']]
-            });
-
-            return templates.map(template => template.toJSON());
-        } catch (error) {
-            throw new Error(`Error fetching templates with usage: ${error.message}`);
+    ensureModel() {
+        if (!this.model && this.db && this.db.Template) {
+            this.setModel(this.db.Template);
+        }
+        if (!this.model) {
+            throw new Error('Template model not initialized. Make sure the database connection is established.');
         }
     }
 
-    // Tìm template theo content
-    async searchTemplates(searchTerm) {
+    async getAllWithFilters({ limit, offset, filters }) {
         try {
-            const searchPattern = `%${searchTerm}%`;
+            this.ensureModel();
+            
+            const whereClause = {};
+            const orderClause = [];
 
-            return await this.getAll({
-                where: {
-                    content: { [Op.like]: searchPattern }
-                },
-                order: [['index', 'ASC']]
-            });
-        } catch (error) {
-            throw new Error(`Error searching templates: ${error.message}`);
-        }
-    }
-
-    // Update template index (reorder)
-    async updateTemplateIndex(templateId, newIndex) {
-        try {
-            const [updatedRowsCount] = await this.model.update(
-                { index: newIndex },
-                { where: { id_template: templateId } }
-            );
-
-            return updatedRowsCount > 0;
-        } catch (error) {
-            throw new Error(`Error updating template index: ${error.message}`);
-        }
-    }
-
-    // Get most popular templates
-    async getPopularTemplates(limit = 5) {
-        try {
-            const templates = await this.model.findAll({
-                include: [
-                    {
-                        model: db.InfoWed,
-                        as: 'InfoWeds',
-                        attributes: []
-                    }
-                ],
-                attributes: [
-                    'id_template',
-                    'index',
-                    'content',
-                    [fn('COUNT', col('InfoWeds.id_info_wed')), 'usage_count']
-                ],
-                group: ['Template.id_template'],
-                order: [[fn('COUNT', col('InfoWeds.id_info_wed')), 'DESC']],
-                limit
-            });
-
-            return templates.map(template => template.toJSON());
-        } catch (error) {
-            throw new Error(`Error fetching popular templates: ${error.message}`);
-        }
-    }
-
-    // Clone template
-    async cloneTemplate(templateId) {
-        try {
-            const originalTemplate = await this.getById(templateId);
-            if (!originalTemplate) {
-                throw new Error('Template not found');
+            // Search filter - chỉ tìm trong content
+            if (filters.search) {
+                whereClause.content = {
+                    [Op.like]: `%${filters.search}%`
+                };
             }
 
-            const clonedData = {
-                index: originalTemplate.index + 1,
-                content: originalTemplate.content
-            };
+            // Sorting
+            const validSortFields = ['id_template', 'index', 'created_at'];
+            if (validSortFields.includes(filters.sort_by)) {
+                orderClause.push([filters.sort_by, filters.sort_order]);
+            } else {
+                orderClause.push(['created_at', 'DESC']);
+            }
 
-            return await this.create(clonedData);
+            console.log('🔍 Query filters:', whereClause);
+            console.log('📊 Order clause:', orderClause);
+
+            const result = await this.model.findAndCountAll({
+                where: whereClause,
+                order: orderClause,
+                limit,
+                offset,
+                attributes: ['id_template', 'index', 'content', 'created_at']
+            });
+
+            console.log(`📋 Found ${result.count} templates`);
+            return result;
+
         } catch (error) {
-            throw new Error(`Error cloning template: ${error.message}`);
+            console.error('TemplateRepository.getAllWithFilters error:', error);
+            throw new Error(`Failed to get templates: ${error.message}`);
+        }
+    }
+
+    async searchByContent(searchTerm, { limit = 10, offset = 0 } = {}) {
+        try {
+            this.ensureModel();
+            
+            return await this.model.findAndCountAll({
+                where: {
+                    content: {
+                        [Op.like]: `%${searchTerm}%`
+                    }
+                },
+                order: [['created_at', 'DESC']],
+                limit,
+                offset
+            });
+        } catch (error) {
+            console.error('TemplateRepository.searchByContent error:', error);
+            throw new Error(`Failed to search templates: ${error.message}`);
+        }
+    }
+
+    async getByIndex(index) {
+        try {
+            this.ensureModel();
+            
+            return await this.model.findOne({
+                where: { index },
+                order: [['created_at', 'DESC']]
+            });
+        } catch (error) {
+            console.error('TemplateRepository.getByIndex error:', error);
+            throw new Error(`Failed to get template by index: ${error.message}`);
         }
     }
 }
