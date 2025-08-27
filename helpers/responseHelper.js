@@ -1,5 +1,6 @@
 /**
  * Tạo response thành công chuẩn cho API
+ * @param {Object} res - Express response object
  * @param {any} data - Dữ liệu trả về
  * @param {string} message - Thông báo thành công (mặc định: 'Success')
  * @returns {Object} Response object với format chuẩn
@@ -13,6 +14,7 @@ export const successResponse = (data, message = 'Success') => ({
 
 /**
  * Tạo response lỗi chuẩn cho API
+ * @param {Object} res - Express response object
  * @param {string} message - Thông báo lỗi (mặc định: 'Something went wrong')
  * @param {number} code - Mã lỗi HTTP (mặc định: 500)
  * @param {any} details - Chi tiết lỗi (tùy chọn)
